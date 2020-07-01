@@ -1,0 +1,701 @@
+<style lang="less">
+  
+.lrc {
+  height: 60rpx;
+  width: 720rpx;
+  text-align: center;
+}
+
+.lrcColor {
+  color: green;
+}
+
+.operate_placeholder {
+  height: 100px;
+}
+
+.footer{
+  padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  position: fixed;
+  bottom: 0;
+}
+
+.progress-bar {
+  display: flex;
+
+  .now {
+    height: 30rpx;
+    width: 100rpx;
+    margin-right: 5rpx;
+  }
+
+  .progress-line {
+    height: 30rpx;
+    width: 650rpx;
+  }
+
+  .long {
+    height: 30rpx;
+    width: 100rpx;
+    margin-left: 20rpx;
+  }
+}
+
+
+
+
+.audio {
+  display: flex;
+  flex-direction: row;
+}
+
+.audio-img {
+  width: 200rpx;
+  height: 200rpx;
+}
+
+.audio-content {
+  display: flex;
+  flex-direction: column;
+  margin-top: 20rpx;
+  font-size: 25rpx;
+  width: 560rpx;
+  padding-right: 25rpx;
+}
+
+.audio-singer {
+  margin-top: 10rpx;
+}
+
+.slider {
+  margin: -5rpx 0 0 0;
+}
+
+.time {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  font-size: 20rpx;
+}
+
+
+
+
+
+.btn-group{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.play{
+  margin: 0 5px;
+}
+.play icon{
+  font-size: 50px;
+}
+.prev icon, .next icon{
+  font-size: 30px;
+}
+
+.cu-btn.big {
+  padding: 0 60rpx;
+  font-size: 48rpx;
+  height: 120rpx;
+}
+
+
+
+.cu-list.menu-avatar > .cu-item {
+  height: auto;
+}
+</style>
+
+<template>
+  <div class="container">
+    <!-- 歌词部分 -->
+    <view>
+      <scroll-view class="nav" scroll-y scroll-with-animation style="height: calc(100vh - 100px)"
+          scroll-into-view="lrc-{{lrcOffsetLine}}" scroll-top="{{scrollTop}}" bindscroll="onScrollLrcs">
+        <view class="operate_placeholder"></view>
+        <view class="lrc" wx:for="{{lrcs}}" id="lrc-{{item.time}}" wx:key="{{item.time}}">
+          <text wx:if="{{item.time === 'ti:'}}" class="text-xl text-bold">{{item.sentence}}</text>
+          <text wx:elif="{{item.time === 'ar:' || item.time === 'al:' || item.time === 'by:'}}" class="text-df">{{item.sentence}}</text>
+          <text wx:else class="text-lg {{lrcLine === item.time ? 'lrcColor text-bold' : ''}}">{{item.sentence}}</text>
+        </view>
+        <view class="operate_placeholder"></view>
+      </scroll-view>
+    </view>
+
+    <!-- 底部进度条 -->
+    <view class="footer shadow shadow-lg bg-white">
+      
+      <view class="progress-bar margin-bottom">
+        <view class="now">{{now}}</view>
+        <view class="progress-line">
+          <slider class="slider" step="1" min="{{min}}" max="{{max}}" value="{{value}}" block-size="12" bindchange="seek" bindchanging="seeking"></slider>
+        </view>
+        <view class="long">{{long}}</view>
+      </view>
+
+
+      
+
+      <!-- 操作按钮 -->
+      <view class="btn-group">
+        <view class="prev">
+          <button class="cu-btn icon text-green cuIcon-more margin-lr" bindtap="showModal" data-target="rateModal"></button>
+        </view>
+        <view class="prev">
+          <button class="cu-btn icon lg text-green cuIcon-back margin-lr" bindtap="playPrev"></button>
+        </view>
+        <view class="play">
+          <button class="cu-btn icon big text-green margin-lr {{isplaying ? 'cuIcon-stop' : 'cuIcon-playfill'}}" bindtap="changePlayingState"></button>
+        </view>
+        <view class="next">
+          <button class="cu-btn icon lg text-green cuIcon-right margin-lr" bindtap="playNext"></button>
+        </view>
+        <view class="next">
+          <button class="cu-btn icon text-green cuIcon-list margin-lr" bindtap="showModal" data-target="eposideModal"></button>
+        </view>
+      </view>
+
+    </view>
+
+   
+
+    <view class="cu-modal bottom-modal {{modalName ==='rateModal' ? 'show' : ''}}" bindtap="hideModal">
+      <view class="cu-dialog" catchtap>
+        <view class="cu-bar bg-white">
+          <view class="action text-green">Choose play rate</view>
+        </view>
+        <view class="solid-top">
+          <view class="cu-list menu-avatar grid col-5">
+            <view class="cu-item" bindtap="chooseRate" data-id="0.5">
+              <text>0.5x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="0.6">
+              <text>0.6x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="0.8">
+              <text>0.8x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="0.9">
+              <text>0.9x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="1.0">
+              <text>1.0x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="1.1">
+              <text>1.1x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="1.2">
+              <text>1.2x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="1.3">
+              <text>1.3x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="1.5">
+              <text>1.5x</text>
+            </view>
+            <view class="cu-item" bindtap="chooseRate" data-id="2.0">
+              <text>2.0x</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="cu-modal bottom-modal solid-top {{modalName === 'eposideModal' ? 'show' : ''}}" bindtap="hideModal">
+      <view class="cu-dialog" catchtap>
+        <view class="cu-bar bg-white padding-right">
+          <view class="action text-green">Choose lesson</view>
+          <view class="action text-green" bindtap="hideModal">Cancel</view>
+        </view>
+        <view class="solid-top">
+          <view class="cu-list menu-avatar grid col-6">
+            <view wx:for="{{eposideList}}" wx:key="{{item}}" class="cu-item" bindtap="chooseEpiSode" data-id="{{item}}">
+              <text>L{{item}}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+
+    
+  </div>
+</template>
+
+<script>
+  import wepy from '@wepy/core'
+  import { mapState } from '@wepy/x';
+  import store from '../store';
+
+  // 可以在任意页面获取音频实例，实例唯一
+  const ba = wx.getBackgroundAudioManager();
+  const seasonNum = 26;
+  const lrcOffset = 10;
+
+  wepy.page({
+    store,
+
+    data: {
+      
+      isplaying: false,
+      initializedSeason: null,
+      playList: [],
+      eposideList: [],
+      min: 0, //slider最小值
+      max: 0, //slider最大值:音频时长
+      value: 0, //slider当前进度
+      now: '00:00', //播放条当前时间
+      long: '04:23', //音频总时长
+      playIndex: 0, //当前播放列表的index
+      currentTime: 0, //当前播放时间
+      duration: 0, //总时长
+
+
+      lrcs: null,
+      lrcOffsetLine: null, // 歌词滚动
+      lrcLine: null, // 歌词高亮
+      scrollTop: null, // 滚动条位置, 切换歌曲时, 滚动条滚动到顶部
+
+
+
+
+      modalName: null,
+      seasonNum: seasonNum,
+    },
+
+    computed: {
+
+    },
+
+    onShareAppMessage: function () {
+      return {
+        title: "走遍美国 听力练习"
+      }
+    },
+
+    onLoad: function() {
+      this.initPlayList();
+
+    },
+
+    onReady: function () {
+      let that = this;
+      that.playIndex = parseInt(wx.getStorageSync("playIndex") || 0);
+
+      that.setAudio();
+
+      // 音频播放进度实时回调
+      ba.onTimeUpdate(function () {
+        let currentTime = parseInt(ba.currentTime);
+        let now = that.formatS2M(currentTime);
+        if (currentTime > 0 && currentTime != that.currentTime) {
+          that.currentTime = currentTime;
+          that.value = currentTime;
+          that.now = now;
+
+          // 滚动歌词
+          that.scrollLrcs(that.now);
+        }
+
+        if (ba.duration != that.max) {
+          let long = that.formatS2M(ba.duration);
+          that.duration = ba.duration;
+          that.max = ba.duration;
+          that.long = long;
+        }
+      });
+
+      ba.onWaiting(function() {
+        
+      })
+
+      ba.onCanplay(function() {
+
+      })
+
+      ba.onEnded(function () {
+        that.playNext();
+      });
+
+      ba.onNext(function () {
+        that.playNext();
+      });
+
+      ba.onPrev(function () {
+        that.playPrev();
+      });
+    },
+
+    methods: {
+
+      onScrollLrcs() {
+
+      },
+
+      scrollLrcs(now) {
+        this.scrollTop = null;
+        // 滚动歌词
+        const length = this.lrcs.length;
+        for (let j = 1; j < length; j++) {
+          if (now >= this.lrcs[j - 1].time && now <= this.lrcs[j].time) {
+            this.lrcLine = this.lrcs[j - 1].time;
+            if (j >= lrcOffset) {
+              this.lrcOffsetLine = this.lrcs[j - lrcOffset].time;
+              break;
+            }
+          } else if (now >= this.lrcs[length - 1].time) {
+            this.lrcLine = this.lrcs[length - 1].time;
+            if (length >= lrcOffset) {
+              this.lrcOffsetLine = this.lrcs[length - lrcOffset].time;
+              break;
+            }
+          }
+        }
+
+      },
+
+
+      changePlayingState() {
+        if (!this.isplaying) {
+          ba.play();
+          this.isplaying = true;
+        } else {
+          ba.pause();
+          this.isplaying = false;
+        }
+      },
+
+      /**
+       * 播放新的音频
+       */
+      setAudio() {
+        
+        var data = this.playList[this.playIndex];
+        this.max = 100;
+        this.value = 0;
+        this.title = data.title;
+        this.singer = data.singer;
+        this.epname = data.epname;
+
+        this.currentTime = 0;
+        this.duration = 0;
+        ba.title = data.title;
+        ba.epname = data.epname;
+        ba.singer = data.singer;
+        ba.src = data.src;
+        // console.log(data.src);
+        this.isplaying = true;
+
+        wx.setStorage({
+          key: "playIndex",
+          data: this.playIndex
+        });
+        
+        this.lrcOffsetLine = null;
+        this.lrcLine = null;
+        let lrcPath = 'u' + data.eid;
+        this.initLrc(lrcPath);
+        
+        this.scrollTop = 0;
+      },
+
+      /**
+       * 播放下一首
+       */
+      playNext() {
+        let playIndex = 0;
+        if (this.playIndex < (this.playList.length - 1)) {
+          playIndex = this.playIndex + 1;
+        } 
+        this.playIndex = playIndex;
+        
+        this.setAudio();
+      },
+
+      /**
+       * 播放上一首
+       */
+      playPrev() {
+        var playIndex = this.playList.length - 1;
+        if (this.playIndex > 0) {
+          playIndex = this.playIndex - 1;
+        } 
+        this.playIndex = playIndex;
+        
+        this.setAudio();
+      },
+
+      /**
+       * 滑动播放进度
+       */
+      seek(e) {
+        let value = e.$wx.detail.value;
+        if (value) {
+          ba.seek(value);
+          let now = this.formatS2M(value);
+          this.scrollLrcs(now);
+        }
+      },
+      /**
+       * 滑动中
+       */
+      seeking(e) {
+        let value = e.$wx.detail.value;
+        let now = this.formatS2M(value);
+        // 显示当前滑动的时间
+        this.now = now;
+      },
+      /**
+       * 将秒格式化为如 02:05
+       */
+      formatS2M(seconds) {
+        if (seconds) {
+          var durationMinute = parseInt(seconds / 60);
+          var durationSecond = parseInt(seconds % 60);
+          if (durationSecond < 10) {
+            durationSecond = '0' + durationSecond;
+          }
+          if (durationMinute < 10) {
+            durationMinute = '0' + durationMinute;
+          }
+          return (durationMinute + ':' + durationSecond)
+        }
+        return ('00:00');
+      },
+
+      initPlayList() {
+        this.playList = [];
+        this.eposideList = [];
+        const cloudPrefix = "cloud://albumusa-blhxa.616c-albumusa-blhxa-1302494472/audio/"
+        let cloudId;
+        const acts = ['I', 'II', 'III'];
+
+        for (let e = 0; e < seasonNum; e++) {
+          let seasonString = e < 9 ? '0' + (e + 1) : '' + (e + 1);
+          for (let i = 0; i < 3; i++) {
+            cloudId = cloudPrefix + 'u' + seasonString + '-' + (i + 1) + '.mp3';
+            
+            this.eposideList.push(seasonString + '-' + (i + 1));
+            this.playList.push({
+              eid: seasonString + '-' + (i + 1),
+              title: '走遍美国',
+              epname: ' ACT ' + acts[i],
+              singer: 'L' + seasonString,
+              src: cloudId
+            });
+          }
+        }
+      },
+
+      chooseEpiSode(e) {
+        
+        let eposide = e.$wx.currentTarget.dataset.id;
+        for (let i = 0; i < this.playList.length; i++) {
+          if (eposide === this.playList[i].eid) {
+            this.playIndex = i;
+          }
+        }
+        this.setAudio();
+        this.modalName = null;
+      },
+
+      chooseRate(e) {
+        let rate = e.$wx.currentTarget.dataset.id;
+        ba.playbackRate = parseFloat(rate);
+        this.modalName = null;
+      },
+
+    
+      showModal(e) {
+        this.modalName = e.currentTarget.dataset.target;
+      },
+      hideModal(e) {
+        this.modalName = null;
+      },
+
+      getLrcList(lrcJson) {
+        const lrcList = [];
+        for(var key in lrcJson){
+      　　lrcList.push({time: key.substr(0, 5), sentence: lrcJson[key]});
+        }
+        this.lrcs = lrcList;
+      },
+
+      initLrc(eposide) {
+        let lrcs;
+        if (eposide == 'u01-1') {
+          lrcs = require('../lrc/u01-1');
+        } else if(eposide === 'u01-2') {
+          lrcs = require('../lrc/u01-2');
+        } else if(eposide === 'u01-3') {
+          lrcs = require('../lrc/u01-3');
+        } else if(eposide == 'u02-1') {
+          lrcs = require('../lrc/u02-1');
+        } else if(eposide === 'u02-2') {
+          lrcs = require('../lrc/u02-2');
+        } else if(eposide === 'u02-3') {
+          lrcs = require('../lrc/u02-3');
+        } else if(eposide == 'u03-1') {
+          lrcs = require('../lrc/u03-1');
+        } else if(eposide === 'u03-2') {
+          lrcs = require('../lrc/u03-2');
+        } else if(eposide === 'u03-3') {
+          lrcs = require('../lrc/u03-3');
+        } else if(eposide == 'u04-1') {
+          lrcs = require('../lrc/u04-1');
+        } else if(eposide === 'u04-2') {
+          lrcs = require('../lrc/u04-2');
+        } else if(eposide === 'u04-3') {
+          lrcs = require('../lrc/u04-3');
+        } else if(eposide == 'u05-1') {
+          lrcs = require('../lrc/u05-1');
+        } else if(eposide === 'u05-2') {
+          lrcs = require('../lrc/u05-2');
+        } else if(eposide === 'u05-3') {
+          lrcs = require('../lrc/u05-3');
+        } else if(eposide == 'u06-1') {
+          lrcs = require('../lrc/u06-1');
+        } else if(eposide === 'u06-2') {
+          lrcs = require('../lrc/u06-2');
+        } else if(eposide === 'u06-3') {
+          lrcs = require('../lrc/u06-3');
+        } else if(eposide == 'u07-1') {
+          lrcs = require('../lrc/u07-1');
+        } else if(eposide === 'u07-2') {
+          lrcs = require('../lrc/u07-2');
+        } else if(eposide === 'u07-3') {
+          lrcs = require('../lrc/u07-3');
+        } else if(eposide == 'u08-1') {
+          lrcs = require('../lrc/u08-1');
+        } else if(eposide === 'u08-2') {
+          lrcs = require('../lrc/u08-2');
+        } else if(eposide === 'u08-3') {
+          lrcs = require('../lrc/u08-3');
+        } else if(eposide == 'u09-1') {
+          lrcs = require('../lrc/u09-1');
+        } else if(eposide === 'u09-2') {
+          lrcs = require('../lrc/u09-2');
+        } else if(eposide === 'u09-3') {
+          lrcs = require('../lrc/u09-3');
+        } else if(eposide == 'u10-1') {
+          lrcs = require('../lrc/u10-1');
+        } else if(eposide === 'u10-2') {
+          lrcs = require('../lrc/u10-2');
+        } else if(eposide === 'u10-3') {
+          lrcs = require('../lrc/u10-3');
+        } else if(eposide == 'u11-1') {
+          lrcs = require('../lrc/u11-1');
+        } else if(eposide === 'u11-2') {
+          lrcs = require('../lrc/u11-2');
+        } else if(eposide === 'u11-3') {
+          lrcs = require('../lrc/u11-3');
+        } else if(eposide == 'u12-1') {
+          lrcs = require('../lrc/u12-1');
+        } else if(eposide === 'u12-2') {
+          lrcs = require('../lrc/u12-2');
+        } else if(eposide === 'u12-3') {
+          lrcs = require('../lrc/u12-3');
+        } else if(eposide == 'u13-1') {
+          lrcs = require('../lrc/u13-1');
+        } else if(eposide === 'u13-2') {
+          lrcs = require('../lrc/u13-2');
+        } else if(eposide === 'u13-3') {
+          lrcs = require('../lrc/u13-3');
+        } else if(eposide == 'u14-1') {
+          lrcs = require('../lrc/u14-1');
+        } else if(eposide === 'u14-2') {
+          lrcs = require('../lrc/u14-2');
+        } else if(eposide === 'u14-3') {
+          lrcs = require('../lrc/u14-3');
+        } else if(eposide == 'u15-1') {
+          lrcs = require('../lrc/u15-1');
+        } else if(eposide === 'u15-2') {
+          lrcs = require('../lrc/u15-2');
+        } else if(eposide === 'u15-3') {
+          lrcs = require('../lrc/u15-3');
+        } else if(eposide == 'u16-1') {
+          lrcs = require('../lrc/u16-1');
+        } else if(eposide === 'u16-2') {
+          lrcs = require('../lrc/u16-2');
+        } else if(eposide === 'u16-3') {
+          lrcs = require('../lrc/u16-3');
+        } else if(eposide == 'u17-1') {
+          lrcs = require('../lrc/u17-1');
+        } else if(eposide === 'u17-2') {
+          lrcs = require('../lrc/u17-2');
+        } else if(eposide === 'u17-3') {
+          lrcs = require('../lrc/u17-3');
+        } else if(eposide == 'u18-1') {
+          lrcs = require('../lrc/u18-1');
+        } else if(eposide === 'u18-2') {
+          lrcs = require('../lrc/u18-2');
+        } else if(eposide === 'u18-3') {
+          lrcs = require('../lrc/u18-3');
+        } else if(eposide == 'u19-1') {
+          lrcs = require('../lrc/u19-1');
+        } else if(eposide === 'u19-2') {
+          lrcs = require('../lrc/u19-2');
+        } else if(eposide === 'u19-3') {
+          lrcs = require('../lrc/u19-3');
+        } else if(eposide == 'u20-1') {
+          lrcs = require('../lrc/u20-1');
+        } else if(eposide === 'u20-2') {
+          lrcs = require('../lrc/u20-2');
+        } else if(eposide === 'u20-3') {
+          lrcs = require('../lrc/u20-3');
+        } else if(eposide == 'u21-1') {
+          lrcs = require('../lrc/u21-1');
+        } else if(eposide === 'u21-2') {
+          lrcs = require('../lrc/u21-2');
+        } else if(eposide === 'u21-3') {
+          lrcs = require('../lrc/u21-3');
+        }  else if(eposide == 'u22-1') {
+          lrcs = require('../lrc/u22-1');
+        } else if(eposide === 'u22-2') {
+          lrcs = require('../lrc/u22-2');
+        } else if(eposide === 'u22-3') {
+          lrcs = require('../lrc/u22-3');
+        }  else if(eposide == 'u23-1') {
+          lrcs = require('../lrc/u23-1');
+        } else if(eposide === 'u23-2') {
+          lrcs = require('../lrc/u23-2');
+        } else if(eposide === 'u23-3') {
+          lrcs = require('../lrc/u23-3');
+        }  else if(eposide == 'u24-1') {
+          lrcs = require('../lrc/u24-1');
+        } else if(eposide === 'u24-2') {
+          lrcs = require('../lrc/u24-2');
+        } else if(eposide === 'u24-3') {
+          lrcs = require('../lrc/u24-3');
+        }  else if(eposide == 'u25-1') {
+          lrcs = require('../lrc/u25-1');
+        } else if(eposide === 'u25-2') {
+          lrcs = require('../lrc/u25-2');
+        } else if(eposide === 'u25-3') {
+          lrcs = require('../lrc/u25-3');
+        }  else if(eposide == 'u26-1') {
+          lrcs = require('../lrc/u26-1');
+        } else if(eposide === 'u26-2') {
+          lrcs = require('../lrc/u26-2');
+        } else if(eposide === 'u26-3') {
+          lrcs = require('../lrc/u26-3');
+        } 
+        this.getLrcList(lrcs.lrcs);
+      }
+
+    }
+  });
+</script>
+<config>
+{
+    navigationBarTitleText: '走遍美国 Family Album U.S.A',
+    usingComponents: {
+    }
+}
+</config>
